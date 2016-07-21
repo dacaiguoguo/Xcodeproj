@@ -4,6 +4,22 @@
 
 ##### Enhancements
 
+* None.  
+
+##### Bug Fixes
+
+* None.  
+
+
+## 1.2.0 (2016-07-11)
+
+##### Enhancements
+
+* Expand `Project` helpers for finding a target's extension targets
+  and their hosts to include all embedded targets  
+  [Ben Asher](https://github.com/benasher44)
+  [#385](https://github.com/CocoaPods/Xcodeproj/pull/385)
+
 * Add helpers to `Project` for finding an extension target's host targets
   and a host target's extension targets.  
   [Ben Asher](https://github.com/benasher44)
@@ -13,6 +29,15 @@
   [Eduard Panasiuk](https://github.com/somedev)
   [#380](https://github.com/CocoaPods/Xcodeproj/pull/380)
   [#383](https://github.com/CocoaPods/Xcodeproj/pull/383)
+
+* Add new Messages extension product types to constants.  
+  [Boris Bügling](https://github.com/neonichu)
+  [#390](https://github.com/CocoaPods/Xcodeproj/pull/390)
+
+* Fix plist serialization with Xcode 8 beta 1.  
+  [Boris Bügling](https://github.com/neonichu)
+  [#389](https://github.com/CocoaPods/Xcodeproj/pull/389)
+
 
 ##### Bug Fixes
 
