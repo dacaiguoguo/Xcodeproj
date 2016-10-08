@@ -87,10 +87,28 @@ module ProjectSpecs
         @project = Xcodeproj::Project.open(@path)
       end
 
+      it 'does not break the chdir system call' do
+        require 'pathname'
+        Dir.mktmpdir do |dir|
+          Dir.chdir(dir) do
+            Pathname(dir).realpath.to_s.should == Dir.getwd
+          end
+        end
+      end
+
       it 'sets itself as the owner of the root object' do
         # The root object might be referenced by other objects like
         # the PBXContainerItemProxy
         @project.root_object.referrers.should.include?(@project)
+      end
+
+      it 'initializes the root object products group also from projects that don\'t have an explicit reference' do
+        path = fixture_path('Cocoa Application Without productRefGroup.xcodeproj')
+        project = Xcodeproj::Project.open(path)
+
+        product_ref_group = project.root_object.product_ref_group
+        product_ref_group.class.should == PBXGroup
+        project.root_object.main_group.children.should.include?(product_ref_group)
       end
 
       # It implicitly checks that all the attributes for the known ISAs.
@@ -133,6 +151,12 @@ module ProjectSpecs
 
       it 'can load projects in Xcode 6.3 format' do
         @path = @dir + '6.3-format.xcodeproj'
+        @project = Xcodeproj::Project.open(@path)
+        @project.object_version.should == '47'
+      end
+
+      it 'can load projects in Xcode 8.0 format' do
+        @path = @dir + '8.0-format.xcodeproj'
         @project = Xcodeproj::Project.open(@path)
         @project.object_version.should == Xcodeproj::Constants::LAST_KNOWN_OBJECT_VERSION.to_s
       end
@@ -208,7 +232,7 @@ module ProjectSpecs
       end
 
       it 'escapes non ASCII characters in the project' do
-        Plist::FFI::DevToolsCore.stubs(:load_xcode_frameworks).returns(nil)
+        Plist::FFI.stubs(:ruby_hash_write_xcode).returns(false)
 
         file_ref = @project.new_file('わくわく')
         file_ref.name = 'わくわく'
@@ -637,6 +661,27 @@ module ProjectSpecs
         extension_bundle_ids.should == ['Extensions WatchKit 1 Extension',
                                         'WatchOS 2 App',
                                         'Today']
+      end
+    end
+
+    describe 'Remote embedded target relationships' do
+      before do
+        dir = Pathname(fixture_path('Sample Project'))
+        project_path = dir + 'ContainsSubproject/ContainsSubproject.xcodeproj'
+        subproject_path = dir + 'ReferencedProject/ReferencedProject.xcodeproj'
+        @project = Xcodeproj::Project.open(project_path)
+        @subproject = Xcodeproj::Project.open(subproject_path)
+      end
+
+      def subproject_target_for_target_name(name)
+        @subproject.native_targets.find do |target|
+          target.name == name
+        end
+      end
+
+      it 'identifies host of target from a sub-project' do
+        subproject_target = subproject_target_for_target_name('ReferencedProject')
+        @project.host_targets_for_embedded_target(subproject_target).map(&:name).should == ['ContainsSubproject']
       end
     end
 

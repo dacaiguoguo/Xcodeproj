@@ -8,6 +8,40 @@
 
 ##### Bug Fixes
 
+* Cover more cases of the Dir.chdir breakages.  
+  [Danielle Tomlinson](https://github.com/dantoml)
+  [#421](https://github.com/CocoaPods/Xcodeproj/pull/421)
+
+
+## 1.3.1 (2016-09-10)
+
+##### Enhancements
+
+* None.  
+
+##### Bug Fixes
+
+* Bump last known object version to support Xcode 8.0.  
+  [Boris Bügling](https://github.com/neonichu)
+  [#412](https://github.com/CocoaPods/Xcodeproj/issues/412)
+  [#414](https://github.com/CocoaPods/Xcodeproj/pull/414)
+
+
+## 1.3.0 (2016-09-02)
+
+##### Enhancements
+
+* Add new Messages application product types to constants.  
+  [Ben Asher](https://github.com/benasher44)
+  [#400](https://github.com/CocoaPods/Xcodeproj/pull/400)
+
+* Add support for identify the host of an embedded target,
+  when the embedded target belongs to a sub-project  
+  [Ben Asher](https://github.com/benasher44)
+  [#396](https://github.com/CocoaPods/Xcodeproj/pull/396)
+
+##### Bug Fixes
+
 * None.  
 
 

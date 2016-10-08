@@ -216,6 +216,7 @@ module Xcodeproj
       if object_version.to_i > Constants::LAST_KNOWN_OBJECT_VERSION
         raise '[Xcodeproj] Unknown object version.'
       end
+      root_object.product_ref_group = root_object.main_group['Products'] || root_object.main_group.new_group('Products')
     end
 
     public
@@ -556,7 +557,7 @@ module Xcodeproj
     def host_targets_for_embedded_target(embedded_target)
       native_targets.select do |native_target|
         ((embedded_target.uuid != native_target.uuid) &&
-         (native_target.dependencies.map(&:target).map(&:uuid).include? embedded_target.uuid))
+         (native_target.dependencies.map(&:native_target_uuid).include? embedded_target.uuid))
       end
     end
 

@@ -1,3 +1,4 @@
+
 module Xcodeproj
   module Plist
     # Provides support for loading and serializing property list files via
@@ -36,9 +37,12 @@ module Xcodeproj
         def write_to_path(hash, path)
           raise ThreadError, 'Can only write plists from the main thread.' unless Thread.current == Thread.main
 
-          if DevToolsCore.load_xcode_frameworks && path.end_with?('pbxproj')
-            ruby_hash_write_xcode(hash, path)
-          else
+          path = File.expand_path(path)
+
+          should_fork = ENV['FORK_XCODE_WRITING']
+          success = ruby_hash_write_xcode(hash, path, should_fork)
+
+          unless success
             CoreFoundation.RubyHashPropertyListWrite(hash, path)
             fix_encoding(path)
           end
@@ -95,8 +99,31 @@ module Xcodeproj
         # @param  [String] path
         #         The path of the file.
         #
-        def ruby_hash_write_xcode(hash, path)
-          path = File.expand_path(path)
+        def ruby_hash_write_xcode(hash, path, should_fork)
+          return false unless path.end_with?('pbxproj')
+          if should_fork
+            require 'open3'
+            _output, status = Open3.capture2e(Gem.ruby, '-e', <<-RUBY, path, :stdin_data => Marshal.dump(hash))
+            $LOAD_PATH.replace #{$LOAD_PATH}
+            path = ARGV.first
+            hash = Marshal.load(STDIN)
+            require "xcodeproj"
+            require "xcodeproj/plist/ffi"
+            ffi = Xcodeproj::Plist::FFI
+            success = ffi::DevToolsCore.load_xcode_frameworks && ffi.send(:ruby_hash_write_devtoolscore, hash, path)
+            exit(success ? 0 : 1)
+            RUBY
+
+            status.success?
+          else
+            monkey_patch_chdir
+            success = DevToolsCore.load_xcode_frameworks && ruby_hash_write_devtoolscore(hash, path)
+
+            success
+          end
+        end
+
+        def ruby_hash_write_devtoolscore(hash, path)
           success = true
 
           begin
@@ -111,7 +138,14 @@ module Xcodeproj
             success = false
           end
 
-          CoreFoundation.RubyHashPropertyListWrite(hash, path) unless success
+          success
+        end
+
+        def monkey_patch_chdir
+          require 'xcodeproj/plist/ffi/chdir_override'
+          class << Dir
+            alias_method :chdir, :cp_chdir
+          end
         end
       end
     end
